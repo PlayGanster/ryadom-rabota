@@ -1,11 +1,12 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import api, { TOKEN_KEY } from "./api"
 import { User } from "./types"
-import { getInitData, isTelegram } from "./telegram"
+import { getInitData, isTelegram, initTelegram } from "./telegram"
 
 interface AuthState {
   user: User | null
   loading: boolean
+  debug: string
   setUser: (u: User | null) => void
   logout: () => void
   loginWithInitData: (initData: string) => Promise<void>
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthState | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [debug, setDebug] = useState("")
 
   const finish = (u: User) => {
     setUser(u)
@@ -23,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    initTelegram()
     const token = localStorage.getItem(TOKEN_KEY)
     const bootstrap = async () => {
       if (token) {
@@ -34,15 +37,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem(TOKEN_KEY)
         }
       }
-      if (isTelegram()) {
+      const tg = isTelegram()
+      const init = getInitData()
+      setDebug(`telegram=${tg} initLen=${init.length}`)
+      if (tg && init) {
         try {
-          const r = await api.post("/auth/telegram-init", { init_data: getInitData() })
+          const r = await api.post("/auth/telegram-init", { init_data: init })
           localStorage.setItem(TOKEN_KEY, r.data.token)
           const me = await api.get("/users/me")
           finish(me.data)
           return
-        } catch {
-          // авторизация через Telegram не прошла
+        } catch (e: any) {
+          setDebug(`telegram-init failed: ${e?.response?.status} ${e?.response?.data?.detail || e?.message}`)
         }
       }
       setLoading(false)
@@ -63,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, setUser, logout, loginWithInitData }}>
+    <AuthContext.Provider value={{ user, loading, debug, setUser, logout, loginWithInitData }}>
       {children}
     </AuthContext.Provider>
   )

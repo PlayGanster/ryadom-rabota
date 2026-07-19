@@ -43,7 +43,7 @@ function AppRoutes() {
 }
 
 function Root() {
-  const { user, loading } = useAuth()
+  const { user, loading, debug } = useAuth()
   if (loading) return <Splash />
   if (!user) {
     return (
@@ -52,6 +52,7 @@ function Root() {
         <p className="text-sm text-muted-foreground">
           Откройте приложение через Telegram-бот, чтобы войти.
         </p>
+        {debug ? <p className="text-xs text-red-500 break-all">{debug}</p> : null}
       </div>
     )
   }
