@@ -10,7 +10,7 @@ if (process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0") {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const forward = (req.query.forward as string | string[] | undefined);
   const path = Array.isArray(forward) ? forward.join("/") : (forward ?? "");
-  const target = `${BACKEND}/api/v1/${path}${req.url?.includes("?") ? "?" + (req.url.split("?")[1] ?? "") : ""}`;
+  const target = `${BACKEND}/api/${path}${req.url?.includes("?") ? "?" + (req.url.split("?")[1] ?? "") : ""}`;
 
   const headers: Record<string, string> = {};
   for (const [k, v] of Object.entries(req.headers)) {
