@@ -6,11 +6,9 @@ import { getInitData, isTelegram } from "./telegram"
 interface AuthState {
   user: User | null
   loading: boolean
-  devMode: boolean
   setUser: (u: User | null) => void
   logout: () => void
   loginWithInitData: (initData: string) => Promise<void>
-  loginWithPhone: (phone: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -18,7 +16,6 @@ const AuthContext = createContext<AuthState | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [devMode, setDevMode] = useState(false)
 
   const finish = (u: User) => {
     setUser(u)
@@ -45,10 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           finish(me.data)
           return
         } catch {
-          // fall through to dev mode
+          // авторизация через Telegram не прошла
         }
       }
-      setDevMode(true)
       setLoading(false)
     }
     bootstrap()
@@ -59,7 +55,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(TOKEN_KEY, r.data.token)
     const me = await api.get("/users/me")
     setUser(me.data)
-    setDevMode(false)
   }
 
   const logout = () => {
@@ -67,15 +62,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }
 
-  const loginWithPhone = async (phone: string) => {
-    const r = await api.post("/auth/login-phone", { phone: phone.trim() })
-    localStorage.setItem(TOKEN_KEY, r.data.token)
-    const me = await api.get("/users/me")
-    setUser(me.data)
-  }
-
   return (
-    <AuthContext.Provider value={{ user, loading, devMode, setUser, logout, loginWithInitData, loginWithPhone }}>
+    <AuthContext.Provider value={{ user, loading, setUser, logout, loginWithInitData }}>
       {children}
     </AuthContext.Provider>
   )

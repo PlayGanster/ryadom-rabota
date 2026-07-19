@@ -2,9 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { AuthProvider, useAuth } from "./lib/auth"
 import AppShell from "./components/layout/AppShell"
 import { Toaster } from "./components/ui/sonner"
-import DevLoginFab from "./components/DevLoginFab"
 import { TmaHeader, TmaFooter } from "./components/TelegramChrome"
-import Login from "./pages/Login"
 import Feed from "./pages/Feed"
 import OrderCreate from "./pages/OrderCreate"
 import OrderDetail from "./pages/OrderDetail"
@@ -45,25 +43,22 @@ function AppRoutes() {
 }
 
 function Root() {
-  const { user, loading, devMode } = useAuth()
+  const { user, loading } = useAuth()
   if (loading) return <Splash />
   if (!user) {
-    if (devMode)
-      return (
-        <div className="flex h-[100dvh] flex-col overflow-hidden">
-          <TmaHeader />
-          <Login />
-          <TmaFooter />
-          <DevLoginFab />
-        </div>
-      )
-    return <Splash />
+    return (
+      <div className="flex h-[100dvh] flex-col items-center justify-center gap-3 bg-[#f0f2f5] px-6 text-center">
+        <TmaHeader />
+        <p className="text-sm text-muted-foreground">
+          Откройте приложение через Telegram-бот, чтобы войти.
+        </p>
+      </div>
+    )
   }
   return (
     <BrowserRouter>
       <AppRoutes />
       <Toaster />
-      {devMode && <DevLoginFab />}
     </BrowserRouter>
   )
 }

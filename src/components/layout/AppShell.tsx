@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom"
 import { Zap, MessageCircle, PlusCircle, ClipboardList, User } from "lucide-react"
 import { useAuth } from "@/lib/auth"
 import api from "@/lib/api"
-import { TmaHeader, TmaFooter } from "@/components/TelegramChrome"
 
 interface TabItem {
   key: string
@@ -11,18 +10,15 @@ interface TabItem {
   icon: ReactNode
 }
 
-function BottomNav({ items, activeKey, onNavigate, unread, devMode }: {
+function BottomNav({ items, activeKey, onNavigate, unread }: {
   items: TabItem[]
   activeKey: string
   onNavigate: (key: string) => void
   unread: number
-  devMode?: boolean
 }) {
   return (
     <nav
-      className={`h-[60px] fixed left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border bg-background/95 px-2 py-1.5 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80 ${
-        devMode ? "bottom-[34px]" : "bottom-3"
-      }`}
+      className="h-[60px] fixed left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full border border-border bg-background/95 px-2 py-1.5 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/80 bottom-3"
       style={{ width: "calc(100% - 32px)", maxWidth: 460 }}
     >
       {items.map((t) => {
@@ -67,7 +63,7 @@ function AppHeader() {
 export default function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, devMode } = useAuth()
+  const { user } = useAuth()
   const [unread, setUnread] = useState(0)
 
   const isCustomer = user?.role === "customer"
@@ -111,28 +107,20 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   const hideNav = location.pathname.startsWith("/chat/")
 
-  const mainPb = devMode
-    ? hideNav
-      ? "pb-7"
-      : "pb-[100px]"
-    : hideNav
-      ? ""
-      : "pb-[85px]"
+  const mainPb = hideNav ? "" : "pb-[85px]"
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-[#f0f2f5]">
-      {devMode ? <TmaHeader onBack={() => navigate(-1)} /> : <AppHeader />}
+      <AppHeader />
       <main className={`flex-1 overflow-y-auto ${mainPb}`}>{children}</main>
       {!hideNav && (
         <BottomNav
           items={tabs}
           activeKey={activeKey}
           unread={unread}
-          devMode={devMode}
           onNavigate={(k) => navigate(k)}
         />
       )}
-      {devMode && <TmaFooter />}
     </div>
   )
 }
