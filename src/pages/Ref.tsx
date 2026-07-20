@@ -51,7 +51,7 @@ export default function Ref() {
   const progress = info?.progress || { next_threshold: 10, remaining: 10, level: 1 }
   const inv = info?.inventory || { 1: 0, 2: 0, 3: 0 }
   const thresholds = info?.thresholds || []
-  const refLink = `https://t.me/ryadomrabota_bot?start=ref_${user?.id}`
+  const refLink = `https://t.me/RyadomRabotaOfficial_bot?start=ref_${user?.id}`
 
   const pct = progress.next_threshold
     ? Math.min(100, Math.round(((count / progress.next_threshold) * 100) || 0))
