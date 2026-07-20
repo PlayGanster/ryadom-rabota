@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { DateWheelPicker, TimeWheelPicker } from "@/components/WheelPicker"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatApiError } from "@/lib/format"
 
 export default function OrderCreate() {
   const { user } = useAuth()
@@ -124,17 +124,32 @@ export default function OrderCreate() {
   }, [form.hourlyRate, form.hours, useHourly])
 
   const handleSubmit = async () => {
-    if (!form.title || !form.description || !form.address || !dateValue || !form.budget) {
-      toast.error("Заполните все обязательные поля")
+    const missing: string[] = []
+    if (!form.title.trim()) missing.push("Заголовок")
+    if (!form.description.trim()) missing.push("Описание")
+    if (!form.address.trim()) missing.push("Адрес")
+    if (!dateValue) missing.push("Дата")
+    if (!form.budget || parseInt(form.budget) <= 0) missing.push("Бюджет")
+    if (useHourly) {
+      if (!form.hourlyRate || parseInt(form.hourlyRate) <= 0) missing.push("Ставка (₽/час)")
+      if (!form.hours || parseInt(form.hours) <= 0) missing.push("Часы")
+    }
+    if (missing.length > 0) {
+      toast.error(`Не заполнено: ${missing.join(", ")}`)
       return
     }
     setLoading(true)
     try {
       const dt = new Date(`${dateValue}T${timeValue || "00:00"}`)
+      if (isNaN(dt.getTime())) {
+        toast.error("Неверная дата или время")
+        setLoading(false)
+        return
+      }
       const data: any = {
-        title: form.title,
-        description: form.description,
-        address: form.address,
+        title: form.title.trim(),
+        description: form.description.trim(),
+        address: form.address.trim(),
         datetime: dt.toISOString(),
         budget: parseInt(form.budget),
         workers_needed: parseInt(form.workersNeeded) || 1,
@@ -147,7 +162,7 @@ export default function OrderCreate() {
       toast.success("Заказ отправлен на модерацию!")
       navigate("/")
     } catch (e: any) {
-      toast.error(e?.response?.data?.detail || "Ошибка")
+      toast.error(formatApiError(e))
     }
     setLoading(false)
   }

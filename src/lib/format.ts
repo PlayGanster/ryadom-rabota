@@ -65,3 +65,41 @@ export function rating(n?: number | null): string {
 export function shortAddress(cityName?: string | null, address?: string): string {
   return `${cityName ? cityName + ", " : ""}${address || ""}`
 }
+
+// Превращает ошибку API (строка detail или массив ошибок валидации FastAPI)
+// в понятный для пользователя текст.
+export function formatApiError(err: any): string {
+  const data = err?.response?.data
+  if (!data) return err?.message || "Ошибка соединения с сервером"
+
+  const detail = data.detail
+
+  // Массив ошибок валидации FastAPI: [{loc:[...], msg, type}]
+  if (Array.isArray(detail)) {
+    const parts = detail
+      .map((d: any) => {
+        const field = Array.isArray(d?.loc) ? d.loc.filter((x: any) => x !== "body").pop() : null
+        const msg = d?.msg || "неверное значение"
+        const fieldName: any = field
+          ? {
+              title: "Заголовок",
+              description: "Описание",
+              address: "Адрес",
+              datetime: "Дата/время",
+              budget: "Бюджет",
+              workers_needed: "Кол-во рабочих",
+              hourly_rate: "Ставка",
+              hours: "Часы",
+              city_id: "Город",
+            }[String(field)] || String(field)
+          : null
+        return fieldName ? `${fieldName}: ${msg}` : msg
+      })
+      .slice(0, 3)
+    return parts.length ? parts.join("; ") : "Ошибка валидации данных"
+  }
+
+  if (typeof detail === "string") return detail
+  if (typeof data === "string") return data
+  return "Ошибка при отправке запроса"
+}
