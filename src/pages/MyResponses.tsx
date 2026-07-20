@@ -1,18 +1,22 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowRightCircle, MapPin, CalendarDays, Inbox, Users, Loader2 } from "lucide-react"
-import api from "@/lib/api"
+import { ArrowRightCircle, MapPin, CalendarDays, Inbox, Users, Loader2, Rocket } from "lucide-react"
+import api, { getReferralInfo, applyBoost } from "@/lib/api"
 import { getCache, setCache, hasCache } from "@/lib/cache"
 import { Order } from "@/lib/types"
 import { myResponsesStatusMap, formatWhen, mapsUrl, shortAddress } from "@/lib/format"
 import { PageHeader, EmptyState, OrderCardSkeleton } from "@/components/shared"
 import { Button } from "@/components/ui/button"
 import { useDelayedSkeleton } from "@/lib/useDelayedSkeleton"
+import { hapticNotify } from "@/lib/telegram"
+import { toast } from "sonner"
+import { useAuth } from "@/lib/auth"
 
 const PAGE_SIZE = 10
 
 export default function MyResponses() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const RESP_KEY = "my:responses"
   const [orders, setOrders] = useState<Order[]>(getCache<Order[]>(RESP_KEY) ?? [])
   const [loading, setLoading] = useState(!hasCache(RESP_KEY))
@@ -55,6 +59,35 @@ export default function MyResponses() {
   useEffect(() => {
     load(true)
   }, [])
+
+  const boostResponse = async (orderId: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      const info = await getReferralInfo()
+      const inv = info.inventory || { 1: 0, 2: 0, 3: 0 }
+      let level = 0
+      if (inv[3] > 0) level = 3
+      else if (inv[2] > 0) level = 2
+      else if (inv[1] > 0) level = 1
+      if (!level) {
+        toast.error("Нет бустов. Пригласите друзей в разделе «Рефералы»")
+        hapticNotify("warning")
+        return
+      }
+      // Найти свой отклик на этот заказ
+      const r = await api.get<any[]>(`/orders/${orderId}/responses`)
+      const myResp = r.data.find((x: any) => x.executor_id === user?.id)
+      if (!myResp) {
+        toast.error("Отклик не найден")
+        return
+      }
+      await applyBoost("response", myResp.id, level)
+      toast.success(`Отклик продвинут (буст ${level} ур.)`)
+      hapticNotify("success")
+    } catch {
+      toast.error("Не удалось применить буст")
+    }
+  }
 
   if (showSkeleton)
     return (
@@ -133,6 +166,11 @@ export default function MyResponses() {
                       >
                         {st.text}
                       </span>
+                      {o.boosted && (
+                        <span className="rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary">
+                          🚀 Буст {o.boost_level} ур.
+                        </span>
+                      )}
                       {(o.workers_needed || 1) > 1 && (
                         <span className="flex items-center gap-1">
                           <Users className="h-4 w-4 text-primary" />
@@ -151,6 +189,15 @@ export default function MyResponses() {
                       На карте
                     </button>
                   </div>
+                  {o.status === "open" && (
+                    <Button
+                      variant="secondary"
+                      className="mt-2.5 w-full"
+                      onClick={(e) => boostResponse(o.id, e)}
+                    >
+                      <Rocket className="h-4 w-4" /> Продвинуть отклик
+                    </Button>
+                  )}
                 </div>
               )
             })}

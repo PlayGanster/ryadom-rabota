@@ -11,6 +11,7 @@ import MyResponses from "./pages/MyResponses"
 import Profile from "./pages/Profile"
 import ChatList from "./pages/ChatList"
 import ChatRoom from "./pages/ChatRoom"
+import Ref from "./pages/Ref"
 
 function Splash() {
   return (
@@ -35,6 +36,7 @@ function AppRoutes() {
         <Route path="/chat/:id" element={<ChatRoom />} />
         <Route path="/my" element={isCustomer ? <MyOrders /> : <MyResponses />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/ref" element={<Ref />} />
         <Route path="/order/:id" element={<OrderDetail />} />
         <Route path="*" element={<Navigate to={isCustomer ? "/create" : "/"} replace />} />
       </Routes>

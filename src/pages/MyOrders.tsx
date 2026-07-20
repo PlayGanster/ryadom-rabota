@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { ClipboardList, CalendarDays, MapPin, DollarSign, Users, Inbox, Loader2 } from "lucide-react"
-import api from "@/lib/api"
+import { ClipboardList, CalendarDays, MapPin, DollarSign, Users, Inbox, Loader2, Rocket } from "lucide-react"
+import api, { getReferralInfo, applyBoost } from "@/lib/api"
 import { getCache, setCache, hasCache } from "@/lib/cache"
 import { Order } from "@/lib/types"
 import { myOrdersStatusMap, formatDate, shortAddress } from "@/lib/format"
 import { PageHeader, EmptyState, MyOrderCardSkeleton } from "@/components/shared"
 import { Button } from "@/components/ui/button"
 import { useDelayedSkeleton } from "@/lib/useDelayedSkeleton"
+import { hapticNotify } from "@/lib/telegram"
+import { toast } from "sonner"
 
 const filters = [
   { key: "", label: "Все" },
@@ -66,6 +68,28 @@ export default function MyOrders() {
   useEffect(() => {
     load(true)
   }, [filter])
+
+  const boostOrder = async (orderId: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    try {
+      const info = await getReferralInfo()
+      const inv = info.inventory || { 1: 0, 2: 0, 3: 0 }
+      let level = 0
+      if (inv[3] > 0) level = 3
+      else if (inv[2] > 0) level = 2
+      else if (inv[1] > 0) level = 1
+      if (!level) {
+        toast.error("Нет бустов. Пригласите друзей в разделе «Рефералы»")
+        hapticNotify("warning")
+        return
+      }
+      await applyBoost("order", orderId, level)
+      toast.success(`Заказ продвинут (буст ${level} ур.)`)
+      hapticNotify("success")
+    } catch {
+      toast.error("Не удалось применить буст")
+    }
+  }
 
   if (showSkeleton)
     return (
@@ -148,8 +172,22 @@ export default function MyOrders() {
                       >
                         {st.text}
                       </span>
+                      {o.boosted && (
+                        <span className="rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary">
+                          🚀 Буст {o.boost_level} ур.
+                        </span>
+                      )}
                     </div>
                   </div>
+                  {o.status === "open" && (
+                    <Button
+                      variant="secondary"
+                      className="mt-2.5 w-full"
+                      onClick={(e) => boostOrder(o.id, e)}
+                    >
+                      <Rocket className="h-4 w-4" /> Продвинуть заказ
+                    </Button>
+                  )}
                 </div>
               )
             })}

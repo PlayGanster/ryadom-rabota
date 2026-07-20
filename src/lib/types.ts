@@ -11,6 +11,8 @@ export interface User {
   rating: number
   is_blocked: boolean
   block_reason?: string | null
+  referred_by?: number | null
+  referrals_count?: number
   created_at: string
 }
 
@@ -42,6 +44,8 @@ export interface Order {
   responses_count: number
   created_at: string
   my_response_status?: ResponseStatus | null
+  boosted?: boolean
+  boost_level?: number | null
 }
 
 export type ResponseStatus = "pending" | "accepted" | "rejected"
@@ -56,6 +60,30 @@ export interface OrderResponse {
   comment?: string | null
   status: ResponseStatus
   created_at: string
+  boosted?: boolean
+  boost_level?: number | null
+}
+
+export interface ReferralThreshold {
+  threshold: number
+  level: number
+  reward: string
+}
+
+export interface ReferralInfo {
+  referrals_count: number
+  referred_by: number | null
+  progress: { next_threshold: number | null; remaining: number; level: number | null }
+  inventory: { 1: number; 2: number; 3: number }
+  thresholds: ReferralThreshold[]
+}
+
+export interface Boost {
+  id: number
+  type: string
+  target_id: number
+  level: number
+  expires_at: string
 }
 
 export interface Review {

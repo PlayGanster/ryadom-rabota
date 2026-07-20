@@ -27,4 +27,21 @@ client.interceptors.response.use(
   }
 )
 
+import type { ReferralInfo, Boost } from "./types"
+
+export async function getReferralInfo(): Promise<ReferralInfo> {
+  const r = await client.get<ReferralInfo>("/referrals/me")
+  return r.data
+}
+
+export async function getActiveBoosts(): Promise<Boost[]> {
+  const r = await client.get<Boost[]>("/referrals/active")
+  return r.data
+}
+
+export async function applyBoost(type: "order" | "response", target_id: number, level: number): Promise<Boost> {
+  const r = await client.post<Boost>("/referrals/apply", { type, target_id, level })
+  return r.data
+}
+
 export default client

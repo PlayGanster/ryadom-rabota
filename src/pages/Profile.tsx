@@ -351,6 +351,16 @@ export default function Profile() {
             trailing={<Switch checked={pushEnabled} onChange={togglePush} />}
           />
         </div>
+        <SectionName title="Рефералы" />
+
+        <div className="space-y-2.5 mt-[12px!important]">
+          <ProfileRow
+            icon={ThumbsUp}
+            label="Реферальная программа"
+            value={user.referrals_count ? `${user.referrals_count} друзей` : undefined}
+            onClick={() => navigate("/ref")}
+          />
+        </div>
         <SectionName title={reviewsLoading ? "Отзывы" : `Отзывы(${reviews.length})`} />
         {reviewsLoading ? (
           <div className="mt-[12px!important]">
